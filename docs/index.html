@@ -201,7 +201,8 @@ function renderC1(c,seg,y,p){
   });
   if(!cards)cards='<div class="empty-state">No hay datos de VIVALCE para este período/categoría</div>';
 
-  const allC1=seg.comex1.filter(m=>m.año===y).sort((a,b)=>a.mes-b.mes);
+  var allC1raw=seg.comex1.slice();if(currentSeg!=='VIVALCE'&&currentSeg!=='Todos'){var vD2=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[];vD2.forEach(function(v){allC1raw.push(v)})}
+  const allC1=allC1raw.filter(m=>m.año===y).sort((a,b)=>a.mes-b.mes);
   const askM={},siM={};
   allC1.forEach(d=>{const t=d.representada==='ASK'?askM:siM;t[d.mes]=(t[d.mes]||0)+d.kg});
 
