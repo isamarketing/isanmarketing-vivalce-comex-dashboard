@@ -172,7 +172,11 @@ function renderOV(c,seg,y,p){
 }
 
 function renderC1(c,seg,y,p){
-  const data=filt(seg.comex1,y,p);
+  var
+ rawData=seg.comex1.slice();if(currentSeg!=='VIVALCE'&&currentSeg!=='Todos')
+ {var vData=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:
+ [];vData.forEach(function(v){rawData.push(v)})}   const
+  data=filt(rawData,y,p);
   const byR={};
   data.forEach(d=>{if(!byR[d.representada])byR[d.representada]={kg:0,fob:0,cif:0,ops:0,origenes:{},productos:{}};const r=byR[d.representada];r.kg+=d.kg;r.fob+=d.fob;r.cif+=d.cif;r.ops+=d.operaciones;Object.entries(d.origenes).forEach(([o,v])=>{r.origenes[o]=(r.origenes[o]||0)+v});d.productos.forEach(p=>{if(!r.productos[p.producto])r.productos[p.producto]={kg:0,fob:0};r.productos[p.producto].kg+=p.kg;r.productos[p.producto].fob+=p.fob})});
   const tKg=Object.values(byR).reduce((s,r)=>s+r.kg,0),tFob=Object.values(byR).reduce((s,r)=>s+r.fob,0);
