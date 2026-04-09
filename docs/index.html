@@ -209,7 +209,7 @@ function renderC1(c,seg,y,p){
   c.innerHTML=`
   <div class="kpi-row">
     <div class="kpi vivalce"><div class="label">Total VIVALCE</div><div class="value">${fmt(tKg)} kg</div><div class="sub">${fmtUSD(tFob)}</div></div>
-    <div class="kpi"><div class="label">Precio Promedio FOB</div><div class="value">${fmtP(tKg>0?tFob/tKg:0)} USD/kg</div></div>
+    <div class="kpi"><div class="label">Último Precio FOB</div><div class="value">${fmtP(tKg>0?tFob/tKg:0)} USD/kg</div></div>
   </div>
   <div class="card" style="margin-bottom:20px"><h3><span class="dot" style="background:var(--vivalce)"></span>Evolución Mensual por Representada (kg)</h3><div class="chart-container"><canvas id="chC1M"></canvas></div></div>
   <div class="grid2">${cards}</div>`;
