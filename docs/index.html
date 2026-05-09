@@ -59,13 +59,71 @@ table.data .bar-bg{position:absolute;left:0;top:3px;bottom:3px;background:var(--
 .tag.origin{background:rgba(79,140,255,.1);color:var(--comp)}
 .empty-state{padding:32px;text-align:center;color:var(--text-dim);font-size:13px}
 .footer{padding:12px 28px;text-align:center;color:var(--text-dim);font-size:10px;border-top:1px solid var(--border)}
+.btn-export{background:var(--vivalce);border:none;color:#0B0F1A;padding:7px 14px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:6px;margin-left:10px;transition:all .2s}
+.btn-export:hover{filter:brightness(1.1)}
+.btn-export svg{width:12px;height:12px}
+
+/* === PDF / PRINT === */
+#printPdf{display:none}
+@media print{
+  @page{size:A4 portrait;margin:14mm 12mm}
+  body{background:#fff!important;color:#1a1a1a!important;font-family:'DM Sans',Arial,sans-serif;font-size:10pt}
+  .header,.controls,.tabs,.dashboard,.footer,.btn-export{display:none!important}
+  #printPdf{display:block!important;color:#1a1a1a}
+  #printPdf .pdf-page{page-break-after:always;padding:0;break-inside:avoid}
+  #printPdf .pdf-page:last-child{page-break-after:auto}
+  #printPdf h1{font-size:18pt;font-weight:700;margin:0 0 4pt 0;color:#0B0F1A;letter-spacing:-.3pt}
+  #printPdf h1 .accent{color:#00876e}
+  #printPdf h2{font-size:13pt;font-weight:700;margin:14pt 0 6pt 0;color:#0B0F1A;border-bottom:1.5pt solid #00876e;padding-bottom:2pt}
+  #printPdf h3{font-size:10.5pt;font-weight:700;margin:8pt 0 4pt 0;color:#1a1a1a;text-transform:uppercase;letter-spacing:.5pt}
+  #printPdf .pdf-subtitle{font-size:9pt;color:#666;margin-bottom:12pt}
+  #printPdf .pdf-cover{display:flex;flex-direction:column;justify-content:center;min-height:240mm;text-align:left}
+  #printPdf .pdf-cover-title{font-size:32pt;font-weight:700;line-height:1.05;margin-bottom:6pt;color:#0B0F1A;letter-spacing:-1pt}
+  #printPdf .pdf-cover-period{font-size:14pt;font-weight:500;color:#00876e;margin-bottom:24pt}
+  #printPdf .pdf-cover-meta{font-size:9pt;color:#444;line-height:1.6;border-top:1pt solid #ccc;padding-top:14pt;margin-top:14pt}
+  #printPdf .pdf-cover-meta strong{display:inline-block;min-width:90pt;color:#000}
+  #printPdf table.pdf-tbl{width:100%;border-collapse:collapse;font-size:9pt;margin:6pt 0}
+  #printPdf table.pdf-tbl th{text-align:left;padding:5pt 6pt;background:#0B0F1A;color:#fff;font-size:8pt;text-transform:uppercase;letter-spacing:.5pt;font-weight:600;border:none}
+  #printPdf table.pdf-tbl td{padding:5pt 6pt;border-bottom:.5pt solid #ddd;font-size:9pt;vertical-align:top}
+  #printPdf table.pdf-tbl tr:nth-child(even) td{background:#f7f8fa}
+  #printPdf table.pdf-tbl .num{text-align:right;font-family:'Space Mono',Courier,monospace;font-size:8.5pt;white-space:nowrap}
+  #printPdf table.pdf-tbl .pos{color:#00876e;font-weight:600}
+  #printPdf table.pdf-tbl .neg{color:#c0392b;font-weight:600}
+  #printPdf table.pdf-tbl .vivalce-row td{background:#e6f7f2!important;font-weight:600}
+  #printPdf .pdf-footnote{font-size:7.5pt;color:#666;margin-top:6pt;font-style:italic;line-height:1.4}
+  #printPdf .pdf-page-num{position:fixed;bottom:6mm;right:12mm;font-size:8pt;color:#888}
+  #printPdf .pdf-running-head{position:fixed;top:6mm;left:12mm;font-size:7.5pt;color:#888;text-transform:uppercase;letter-spacing:.5pt}
+  #printPdf .pdf-running-head .sep{margin:0 6pt;color:#ccc}
+  #printPdf .pdf-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10pt}
+  #printPdf .pdf-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6pt;margin:8pt 0}
+  #printPdf .pdf-kpi{border:.5pt solid #ccc;padding:6pt 8pt;border-radius:3pt}
+  #printPdf .pdf-kpi .lbl{font-size:7.5pt;color:#666;text-transform:uppercase;letter-spacing:.5pt;margin-bottom:2pt}
+  #printPdf .pdf-kpi .val{font-size:13pt;font-weight:700;font-family:'Space Mono',Courier,monospace;color:#0B0F1A}
+  #printPdf .pdf-kpi .delta{font-size:8pt;margin-top:2pt}
+  #printPdf .pdf-kpi.vivalce{border-color:#00876e;border-width:1pt}
+  #printPdf .pdf-kpi.vivalce .lbl{color:#00876e}
+  #printPdf .pdf-changes-list{list-style:none;padding:0;margin:6pt 0}
+  #printPdf .pdf-changes-list li{padding:5pt 8pt;border-left:2.5pt solid #ccc;margin-bottom:3pt;font-size:9pt;background:#fafbfc}
+  #printPdf .pdf-changes-list li.critical{border-color:#c0392b}
+  #printPdf .pdf-changes-list li.warning{border-color:#e67e22}
+  #printPdf .pdf-changes-list li.info{border-color:#3498db}
+  #printPdf .pdf-changes-list li.positive{border-color:#00876e}
+  #printPdf .pdf-changes-list li b{display:block;margin-bottom:2pt}
+  #printPdf .pdf-changes-list li .meta{font-size:8pt;color:#666;font-family:'Space Mono',monospace}
+}
 </style>
 </head>
 <body>
 <div class="header">
 <div><h1><span>VIVALCE</span> — Dashboard COMEX</h1><div class="subtitle">Resinas Fenólicas · Posiciones 3909.40</div></div>
+<div style="display:flex;align-items:center;gap:8px">
 <div class="badge">2024 — 2026</div>
+<button class="btn-export" onclick="exportPDF()" title="Exportar reporte del período seleccionado">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+Exportar PDF</button>
 </div>
+</div>
+<div id="printPdf"></div>
 <div class="controls" id="controls">
 <label>Año</label>
 <select id="yearFilter" onchange="render()"><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option></select>
@@ -462,6 +520,435 @@ function renderC2(c,seg,y,p){
 
   const allVals=ds.flatMap(d=>d.data);
   charts.c2m=new Chart(document.getElementById('chC2M'),{type:'line',data:{labels:[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>MESES[m]),datasets:ds},options:cOpts('tn',allVals)});
+}
+
+// === PDF EXPORT ===
+// Helpers de cálculo: comparativas YoY y MoM, detección de cambios significativos.
+// Toda la lógica trabaja sobre el período seleccionado en filtros (year + period).
+
+function _periodLabel(year, period){
+  if(period==='ytd')return `Acumulado ${year} (YTD)`;
+  return `${MESES[+period]} ${year}`;
+}
+
+function _filterMarket(seg, year, period){
+  let arr = (seg.market||[]).filter(m=>m.año===year);
+  if(period!=='ytd')arr = arr.filter(m=>m.mes===+period);
+  return arr;
+}
+
+function _aggMarket(arr){
+  return arr.reduce((acc,m)=>({
+    total_kg: acc.total_kg + (m.total_kg||0),
+    total_fob: acc.total_fob + (m.total_fob||0),
+    vivalce_kg: acc.vivalce_kg + (m.vivalce_kg||0),
+    vivalce_fob: acc.vivalce_fob + (m.vivalce_fob||0),
+    n_ops: acc.n_ops + (m.n_operaciones||0),
+  }),{total_kg:0,total_fob:0,vivalce_kg:0,vivalce_fob:0,n_ops:0});
+}
+
+// Comparar período actual vs (a) mismo período año anterior, (b) mes anterior si aplica
+function _yoy(seg, year, period, mergeVivalce){
+  // Período actual
+  const cur = _aggMarket(_filterMarket(seg, year, period));
+  // Mismo período año anterior
+  const prev = _aggMarket(_filterMarket(seg, year-1, period));
+  // Mes anterior (si period es numérico)
+  let mom = null;
+  if(period!=='ytd'){
+    const m = +period;
+    if(m===1){
+      mom = _aggMarket(_filterMarket(seg, year-1, '12'));
+      mom._label = `Dic ${year-1}`;
+    }else{
+      mom = _aggMarket(_filterMarket(seg, year, String(m-1)));
+      mom._label = `${MESES[m-1]} ${year}`;
+    }
+  }
+  // Si pidió integrar VIVALCE en categoría (sólo para categorías mergeables, ignorado para Todos/VIVALCE)
+  if(mergeVivalce){
+    const vCur = _vivalceAggCategoria(currentSeg, year, period);
+    if(vCur){cur.total_kg+=vCur.kg;cur.total_fob+=vCur.fob;cur.vivalce_kg+=vCur.kg;cur.vivalce_fob+=vCur.fob}
+    const vPrev = _vivalceAggCategoria(currentSeg, year-1, period);
+    if(vPrev){prev.total_kg+=vPrev.kg;prev.total_fob+=vPrev.fob;prev.vivalce_kg+=vPrev.kg;prev.vivalce_fob+=vPrev.fob}
+    if(mom){
+      const mLabel = mom._label;
+      const [mMes,mYear] = period==='ytd'?[null,null]:(+period===1?[12,year-1]:[+period-1,year]);
+      const vMom = _vivalceAggCategoria(currentSeg, mYear, String(mMes));
+      if(vMom){mom.total_kg+=vMom.kg;mom.total_fob+=vMom.fob;mom.vivalce_kg+=vMom.kg;mom.vivalce_fob+=vMom.fob}
+      mom._label = mLabel;
+    }
+  }
+  return{cur,prev,mom};
+}
+
+// VIVALCE agregado para una categoría/período
+function _vivalceAggCategoria(catName, year, period){
+  if(catName==='Todos'||catName==='VIVALCE')return null;
+  if(year==null)return null;
+  const vRows=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[];
+  let kg=0,fob=0,ops=0;
+  vRows.forEach(op=>{
+    if(op.año!==year)return;
+    if(period!=='ytd'&&op.mes!==+period)return;
+    op.productos.forEach(pr=>{
+      if(_vivalceCategoriaProducto(pr.producto,op.representada)===catName){kg+=pr.kg;fob+=pr.fob;ops++}
+    });
+  });
+  return kg>0?{kg,fob,ops}:null;
+}
+
+function _formatDelta(cur, prev, isPercent){
+  if(!prev||prev===0){
+    if(cur===0)return{txt:'—',cls:''};
+    return{txt:'nuevo',cls:'pos'};
+  }
+  const d = ((cur-prev)/Math.abs(prev))*100;
+  if(Math.abs(d)<0.5)return{txt:'=', cls:''};
+  const sign = d>0?'+':'';
+  return{txt:`${sign}${d.toFixed(1)}%`, cls:d>0?'pos':'neg'};
+}
+
+function _formatDeltaAbs(cur, prev, suffix){
+  if(prev==null)return{txt:'—',cls:''};
+  const d = cur-prev;
+  if(Math.abs(d)<0.05)return{txt:'=',cls:''};
+  const sign = d>0?'+':'';
+  return{txt:`${sign}${d.toFixed(1)}${suffix||'pp'}`,cls:d>0?'pos':'neg'};
+}
+
+// Ranking de competidores con cambios vs período anterior
+function _rankingWithChanges(seg, year, period){
+  const cur = {};
+  _filterMarket(seg, year, period); // no usamos
+  (seg.comex2||[]).forEach(entry=>{
+    if(entry.año!==year)return;
+    if(period!=='ytd'&&entry.mes!==+period)return;
+    entry.importadores.forEach(imp=>{
+      if(!cur[imp.importador])cur[imp.importador]={kg:0,fob:0,ops:0};
+      cur[imp.importador].kg+=imp.kg;
+      cur[imp.importador].fob+=imp.fob;
+      cur[imp.importador].ops+=imp.operaciones;
+    });
+  });
+  const prev = {};
+  (seg.comex2||[]).forEach(entry=>{
+    if(entry.año!==year-1)return;
+    if(period!=='ytd'&&entry.mes!==+period)return;
+    entry.importadores.forEach(imp=>{
+      if(!prev[imp.importador])prev[imp.importador]={kg:0,fob:0};
+      prev[imp.importador].kg+=imp.kg;
+      prev[imp.importador].fob+=imp.fob;
+    });
+  });
+  // Inyectar VIVALCE
+  if(currentSeg!=='Todos'&&currentSeg!=='VIVALCE'){
+    const v = _vivalceAggCategoria(currentSeg, year, period);
+    if(v){cur['VIVALCE S.A.']={kg:v.kg,fob:v.fob,ops:v.ops,_vivalce:true}}
+    const vp = _vivalceAggCategoria(currentSeg, year-1, period);
+    if(vp){prev['VIVALCE S.A.']={kg:vp.kg,fob:vp.fob}}
+  }
+  const arr = Object.entries(cur).map(([name,c])=>{
+    const p = prev[name];
+    return{
+      importador:name,
+      kg:c.kg, fob:c.fob, ops:c.ops||0,
+      precio: c.kg>0?c.fob/c.kg:0,
+      kg_prev: p?p.kg:0,
+      delta_kg: p?(c.kg-p.kg):null,
+      delta_pct: p&&p.kg>0?((c.kg-p.kg)/p.kg*100):null,
+      is_new: !p,
+      _vivalce: !!c._vivalce,
+    };
+  });
+  arr.sort((a,b)=>b.kg-a.kg);
+  return arr;
+}
+
+// Cambios significativos para destacar (perfil azul: solo lo que cruza umbrales)
+function _detectChanges(year, period){
+  const out = [];
+  const SEGS = ['Adhesivos','Caucho Industrial','Neumáticos','Fundición'];
+  // 1. Cambios de market share VIVALCE (>3pp)
+  SEGS.forEach(s=>{
+    const seg = DATA.segments[s];
+    if(!seg)return;
+    const yoy = _yoy(seg, year, period, true);
+    const shCur = yoy.cur.total_fob>0 ? yoy.cur.vivalce_fob/yoy.cur.total_fob*100 : 0;
+    const shPrev = yoy.prev.total_fob>0 ? yoy.prev.vivalce_fob/yoy.prev.total_fob*100 : 0;
+    const dpp = shCur-shPrev;
+    if(Math.abs(dpp)>=3){
+      out.push({
+        type:'share_change',
+        sev: dpp<0?'critical':'positive',
+        title:`Market share VIVALCE en ${s}: ${shPrev.toFixed(1)}% → ${shCur.toFixed(1)}%`,
+        meta:`${dpp>=0?'+':''}${dpp.toFixed(1)} pp vs mismo período año anterior`,
+      });
+    }
+  });
+  // 2. Importadores nuevos relevantes (>5tn) en categorías VIVALCE
+  SEGS.forEach(s=>{
+    const seg = DATA.segments[s];
+    if(!seg)return;
+    const ranking = _rankingWithChanges(seg, year, period);
+    ranking.filter(r=>r.is_new && r.kg>=5000 && !r._vivalce).forEach(r=>{
+      out.push({
+        type:'new_importer',
+        sev:'warning',
+        title:`Importador nuevo en ${s}: ${r.importador}`,
+        meta:`${r.kg.toLocaleString('es-AR',{maximumFractionDigits:0})} kg · USD ${r.fob.toLocaleString('es-AR',{maximumFractionDigits:0})} · ${r.precio.toFixed(2)} USD/kg`,
+      });
+    });
+  });
+  // 3. Cambios fuertes en posiciones top (>30% volumen vs año anterior, top 5)
+  SEGS.forEach(s=>{
+    const seg = DATA.segments[s];
+    if(!seg)return;
+    const ranking = _rankingWithChanges(seg, year, period).slice(0,8);
+    ranking.forEach(r=>{
+      if(r.is_new||r._vivalce)return;
+      if(r.delta_pct!=null && Math.abs(r.delta_pct)>=30 && r.kg>=5000){
+        out.push({
+          type:'volume_change',
+          sev: r.delta_pct<0 ? 'info' : 'warning',
+          title:`${r.importador} en ${s}: ${r.delta_pct>0?'+':''}${r.delta_pct.toFixed(0)}% volumen YoY`,
+          meta:`${r.kg.toLocaleString('es-AR',{maximumFractionDigits:0})} kg ahora · ${r.kg_prev.toLocaleString('es-AR',{maximumFractionDigits:0})} kg año anterior`,
+        });
+      }
+    });
+  });
+  return out;
+}
+
+function buildPDF(){
+  const{year, period} = getF();
+  const periodLabel = _periodLabel(year, period);
+  const today = new Date();
+  const fechaGen = today.toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+  const SEGS_VIVALCE = ['Adhesivos','Caucho Industrial','Neumáticos','Fundición'];
+  
+  let html = '';
+  
+  // ============ PÁGINA 1: COVER + KPIs EJECUTIVOS ============
+  const segTodos = DATA.segments['Todos'];
+  const yoyTodos = _yoy(segTodos, year, period, false);
+  const sharePct = yoyTodos.cur.total_fob>0 ? (yoyTodos.cur.vivalce_fob/yoyTodos.cur.total_fob*100) : 0;
+  const sharePrev = yoyTodos.prev.total_fob>0 ? (yoyTodos.prev.vivalce_fob/yoyTodos.prev.total_fob*100) : 0;
+  
+  html += `
+  <div class="pdf-page">
+    <div class="pdf-running-head">VIVALCE COMEX<span class="sep">·</span>Reporte de Importaciones<span class="sep">·</span>${periodLabel}</div>
+    <div class="pdf-cover">
+      <h1 style="font-size:32pt;margin-bottom:4pt"><span class="accent">VIVALCE</span></h1>
+      <div class="pdf-cover-title">Reporte de Importaciones<br>Resinas Fenólicas</div>
+      <div class="pdf-cover-period">${periodLabel}</div>
+      <div class="pdf-cover-meta">
+        <div><strong>Posiciones NCM:</strong> 3909.40.11 / 3909.40.19 / 3909.40.91 / 3909.40.99</div>
+        <div><strong>Categorías:</strong> Adhesivos · Caucho Industrial · Neumáticos · Fundición · Madera/Aglomerados · Abrasivos · Fricción</div>
+        <div><strong>Fuente:</strong> Aduana Argentina · Operaciones DEFINITIVAS · USD FOB</div>
+        <div><strong>Generado:</strong> ${fechaGen}</div>
+        <div><strong>Distribución:</strong> Cecilia (RECSA) · Viviana (VIVALCE) · Gabriela Poblet (ISAN Marketing)</div>
+      </div>
+    </div>
+  </div>`;
+  
+  // ============ PÁGINA 2: RESUMEN EJECUTIVO POR CATEGORÍA ============
+  const allSegs = ['Todos', ...DATA.meta.segmentos.filter(s=>s!=='Todos'&&s!=='VIVALCE')];
+  let rows = '';
+  allSegs.forEach(sName=>{
+    const sg = DATA.segments[sName];
+    const isMergeable = sName!=='Todos';
+    const yo = _yoy(sg, year, period, isMergeable);
+    const cur = yo.cur, prev = yo.prev, mom = yo.mom;
+    const dKg = _formatDelta(cur.total_kg, prev.total_kg);
+    const dFob = _formatDelta(cur.total_fob, prev.total_fob);
+    const sharePctC = cur.total_fob>0 ? (cur.vivalce_fob/cur.total_fob*100) : 0;
+    const sharePctP = prev.total_fob>0 ? (prev.vivalce_fob/prev.total_fob*100) : 0;
+    const dShare = _formatDeltaAbs(sharePctC, sharePctP, ' pp');
+    const isVivCat = SEGS_VIVALCE.includes(sName) || sName==='Todos';
+    rows += `<tr${sName==='Todos'?' style="font-weight:700;border-top:1pt solid #0B0F1A"':''}>
+      <td>${sName}</td>
+      <td class="num">${cur.total_kg.toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+      <td class="num ${dKg.cls}">${dKg.txt}</td>
+      <td class="num">${(cur.total_fob/1000).toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+      <td class="num ${dFob.cls}">${dFob.txt}</td>
+      <td class="num">${isVivCat?cur.vivalce_kg.toLocaleString('es-AR',{maximumFractionDigits:0}):'—'}</td>
+      <td class="num">${isVivCat?sharePctC.toFixed(1)+'%':'—'}</td>
+      <td class="num ${dShare.cls}">${isVivCat?dShare.txt:'—'}</td>
+    </tr>`;
+  });
+  
+  html += `
+  <div class="pdf-page">
+    <div class="pdf-running-head">VIVALCE COMEX<span class="sep">·</span>${periodLabel}</div>
+    <h2>Resumen ejecutivo</h2>
+    <p class="pdf-subtitle">Mercado total y participación VIVALCE por categoría · Comparativa con mismo período año anterior</p>
+    <table class="pdf-tbl">
+      <thead><tr>
+        <th>Categoría</th>
+        <th class="num">Volumen<br>(kg)</th>
+        <th class="num">Δ vol<br>YoY</th>
+        <th class="num">FOB<br>(USD k)</th>
+        <th class="num">Δ FOB<br>YoY</th>
+        <th class="num">VIVALCE<br>(kg)</th>
+        <th class="num">Share<br>(USD)</th>
+        <th class="num">Δ share<br>YoY</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="pdf-footnote">
+      Fuente: Aduana Argentina, operaciones DEFINITIVAS NCM 3909.40 · Volumen en kg netos · FOB en USD · 
+      Share VIVALCE calculado sobre USD FOB · Δ YoY = variación vs mismo período año anterior · 
+      Categorías agregadas según importador y posición arancelaria. "Otros Industrial" no se reporta como categoría VIVALCE.
+    </div>
+    <h3 style="margin-top:14pt">Cambios significativos del período</h3>
+    ${_renderChanges(year, period)}
+    <div class="pdf-page-num">Pág 2</div>
+  </div>`;
+  
+  // ============ PÁGINAS 3-6: UNA POR CATEGORÍA VIVALCE ============
+  let pageNum = 3;
+  SEGS_VIVALCE.forEach(catName=>{
+    const sg = DATA.segments[catName];
+    if(!sg)return;
+    html += _renderCategoryPage(catName, sg, year, period, pageNum);
+    pageNum++;
+  });
+  
+  // ============ PÁGINA FINAL: VIVALCE OPERACIONES + METODOLOGÍA ============
+  html += _renderVivalcePage(year, period, pageNum);
+  
+  document.getElementById('printPdf').innerHTML = html;
+}
+
+function _renderChanges(year, period){
+  const changes = _detectChanges(year, period);
+  if(changes.length===0){
+    return `<div style="font-size:9pt;color:#666;padding:6pt 0">Sin cambios que crucen umbrales del período (Δ share &gt;3pp · importadores nuevos &gt;5 tn · cambios de volumen &gt;30% YoY).</div>`;
+  }
+  let li = '';
+  changes.forEach(c=>{
+    li += `<li class="${c.sev}"><b>${c.title}</b><span class="meta">${c.meta}</span></li>`;
+  });
+  return `<ul class="pdf-changes-list">${li}</ul>`;
+}
+
+function _renderCategoryPage(catName, seg, year, period, pageNum){
+  const yo = _yoy(seg, year, period, true);
+  const ranking = _rankingWithChanges(seg, year, period).slice(0, 12);
+  const sharePct = yo.cur.total_fob>0 ? (yo.cur.vivalce_fob/yo.cur.total_fob*100) : 0;
+  const sharePrev = yo.prev.total_fob>0 ? (yo.prev.vivalce_fob/yo.prev.total_fob*100) : 0;
+  const precioMed = yo.cur.total_kg>0 ? yo.cur.total_fob/yo.cur.total_kg : 0;
+  const precioMedPrev = yo.prev.total_kg>0 ? yo.prev.total_fob/yo.prev.total_kg : 0;
+  
+  // Ranking rows
+  let rows = '';
+  ranking.forEach((r,i)=>{
+    const dCls = r.delta_pct==null ? '' : (r.delta_pct>0 ? 'pos' : 'neg');
+    const dTxt = r.is_new ? 'NUEVO' : (r.delta_pct==null ? '—' : `${r.delta_pct>0?'+':''}${r.delta_pct.toFixed(0)}%`);
+    rows += `<tr${r._vivalce?' class="vivalce-row"':''}>
+      <td>${i+1}</td>
+      <td>${r.importador}${r._vivalce?' <span style="color:#00876e;font-weight:700">[VIVALCE]</span>':''}</td>
+      <td class="num">${r.kg.toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+      <td class="num">${(r.fob/1000).toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+      <td class="num">${r.precio.toFixed(2)}</td>
+      <td class="num ${dCls}">${dTxt}</td>
+    </tr>`;
+  });
+  
+  return `
+  <div class="pdf-page">
+    <div class="pdf-running-head">VIVALCE COMEX<span class="sep">·</span>${catName}<span class="sep">·</span>${_periodLabel(year, period)}</div>
+    <h2>${catName}</h2>
+    <p class="pdf-subtitle">Mercado y posición competitiva · ${_periodLabel(year, period)}</p>
+    
+    <div class="pdf-kpi-row">
+      <div class="pdf-kpi"><div class="lbl">Mercado total</div><div class="val">${(yo.cur.total_kg/1000).toFixed(1)} tn</div><div class="delta ${_formatDelta(yo.cur.total_kg, yo.prev.total_kg).cls}">${_formatDelta(yo.cur.total_kg, yo.prev.total_kg).txt} YoY</div></div>
+      <div class="pdf-kpi"><div class="lbl">FOB total</div><div class="val">${(yo.cur.total_fob/1000).toLocaleString('es-AR',{maximumFractionDigits:0})} k</div><div class="delta ${_formatDelta(yo.cur.total_fob, yo.prev.total_fob).cls}">${_formatDelta(yo.cur.total_fob, yo.prev.total_fob).txt} YoY</div></div>
+      <div class="pdf-kpi vivalce"><div class="lbl">VIVALCE</div><div class="val">${(yo.cur.vivalce_kg/1000).toFixed(2)} tn</div><div class="delta">USD ${(yo.cur.vivalce_fob/1000).toLocaleString('es-AR',{maximumFractionDigits:0})} k</div></div>
+      <div class="pdf-kpi vivalce"><div class="lbl">Share USD</div><div class="val">${sharePct.toFixed(1)}%</div><div class="delta ${_formatDeltaAbs(sharePct, sharePrev, ' pp').cls}">${_formatDeltaAbs(sharePct, sharePrev, ' pp').txt} YoY</div></div>
+    </div>
+    
+    <h3>Ranking importadores</h3>
+    <table class="pdf-tbl">
+      <thead><tr>
+        <th>#</th><th>Importador</th><th class="num">Kg</th><th class="num">FOB k</th><th class="num">USD/kg</th><th class="num">Δ vol YoY</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="pdf-footnote">
+      Precio promedio del mercado: ${precioMed.toFixed(2)} USD/kg (${_formatDeltaAbs(precioMed, precioMedPrev, ' USD/kg').txt} vs período anterior). 
+      Δ vol YoY = variación de kg vs mismo período año anterior. "NUEVO" = importador no presente en período comparado.
+    </div>
+    <div class="pdf-page-num">Pág ${pageNum}</div>
+  </div>`;
+}
+
+function _renderVivalcePage(year, period, pageNum){
+  // Operaciones VIVALCE del período
+  const ops = (DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[])
+    .filter(o=>o.año===year && (period==='ytd'||o.mes===+period))
+    .sort((a,b)=>a.mes-b.mes);
+  
+  let rows = '';
+  let totalKg=0, totalFob=0, totalCif=0;
+  ops.forEach(op=>{
+    op.productos.forEach(pr=>{
+      const cat = _vivalceCategoriaProducto(pr.producto, op.representada) || '—';
+      const orig = Object.keys(op.origenes||{}).join(', ');
+      rows += `<tr>
+        <td>${MESES[op.mes]}</td>
+        <td>${op.representada}</td>
+        <td>${pr.producto}</td>
+        <td>${cat}</td>
+        <td>${orig}</td>
+        <td class="num">${pr.kg.toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+        <td class="num">${pr.fob.toLocaleString('es-AR',{maximumFractionDigits:0})}</td>
+        <td class="num">${pr.kg>0?(pr.fob/pr.kg).toFixed(2):'—'}</td>
+      </tr>`;
+    });
+    totalKg += op.kg; totalFob += op.fob; totalCif += (op.cif||0);
+  });
+  if(rows==='')rows = `<tr><td colspan="8" style="text-align:center;color:#888;padding:14pt">Sin operaciones VIVALCE en el período seleccionado</td></tr>`;
+  
+  return `
+  <div class="pdf-page">
+    <div class="pdf-running-head">VIVALCE COMEX<span class="sep">·</span>Operaciones VIVALCE<span class="sep">·</span>${_periodLabel(year, period)}</div>
+    <h2>Operaciones VIVALCE</h2>
+    <p class="pdf-subtitle">Detalle de importaciones de VIVALCE S.A. en el período</p>
+    
+    <div class="pdf-kpi-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="pdf-kpi vivalce"><div class="lbl">Total kg</div><div class="val">${totalKg.toLocaleString('es-AR',{maximumFractionDigits:0})}</div></div>
+      <div class="pdf-kpi vivalce"><div class="lbl">Total FOB</div><div class="val">USD ${totalFob.toLocaleString('es-AR',{maximumFractionDigits:0})}</div></div>
+      <div class="pdf-kpi vivalce"><div class="lbl">USD/kg promedio</div><div class="val">${totalKg>0?(totalFob/totalKg).toFixed(2):'—'}</div></div>
+    </div>
+    
+    <table class="pdf-tbl">
+      <thead><tr>
+        <th>Mes</th><th>Representada</th><th>Producto</th><th>Categoría</th><th>Origen</th>
+        <th class="num">Kg</th><th class="num">FOB</th><th class="num">USD/kg</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    
+    <h3 style="margin-top:14pt">Metodología</h3>
+    <ul style="font-size:8.5pt;color:#444;line-height:1.55;padding-left:14pt;margin:4pt 0">
+      <li>Datos de Aduana Argentina extraídos de declaraciones de importación con destinación CONSUMO (DEFINITIVO).</li>
+      <li>Volúmenes expresados en kg netos. Valores en USD FOB salvo indicación contraria.</li>
+      <li>Categorización de operaciones por importador (señal primaria) + posición arancelaria (señal secundaria).</li>
+      <li>Operaciones VIVALCE en categorías mergeables (Adhesivos, Caucho Industrial, Neumáticos, Fundición) se imputan al market share de la categoría.</li>
+      <li>"Otros Industrial" agrupa operaciones que no encajan en ninguna de las 7 categorías de mercado VIVALCE; se incluye en "Mercado total" pero no en categorías específicas.</li>
+      <li>Comparativas YoY: mismo período del año anterior (mes vs mismo mes, YTD vs YTD acumulado al mismo mes).</li>
+    </ul>
+    
+    <div class="pdf-page-num">Pág ${pageNum}</div>
+  </div>`;
+}
+
+function exportPDF(){
+  buildPDF();
+  // Pequeño delay para que el browser renderice el contenido antes de imprimir
+  setTimeout(()=>{ window.print(); }, 100);
 }
 
 initPills();
