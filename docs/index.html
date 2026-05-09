@@ -122,7 +122,89 @@ function getF(){return{year:+document.getElementById('yearFilter').value,period:
 function filt(arr,y,p){let d=arr.filter(m=>m.año===y);if(p!=='ytd')d=d.filter(m=>m.mes===+p);return d}
 function destroyC(){Object.values(charts).forEach(c=>c.destroy());charts={}}
 
-function cOpts(u){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8892A8',font:{family:'DM Sans',size:10},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1C2236',titleColor:'#E8ECF4',bodyColor:'#E8ECF4',borderColor:'#2A3050',borderWidth:1,callbacks:{label:ctx=>`${ctx.dataset.label||''}: ${(ctx.parsed.y??ctx.parsed.x)?.toLocaleString('es-AR',{maximumFractionDigits:1})} ${u}`}}},scales:{x:{ticks:{color:'#8892A8',font:{size:10}},grid:{color:'#1C2236'}},y:{ticks:{color:'#8892A8',font:{family:'Space Mono',size:9}},grid:{color:'#1C2236'},title:{display:true,text:u,color:'#8892A8',font:{size:10}}}}}}
+// Auto-zoom: si los valores son chicos (max < 10), no forzar arrancar en 0.
+// Si max es 0, no aplicar (charts vacíos).
+function _yScale(values){
+  const nums=values.filter(v=>typeof v==='number'&&!isNaN(v));
+  if(nums.length===0)return{beginAtZero:true};
+  const max=Math.max(...nums);
+  const min=Math.min(...nums);
+  if(max===0)return{beginAtZero:true};
+  // Si rango es chico vs absoluto -> auto-zoom
+  if(max<10){
+    return{beginAtZero:false,suggestedMin:Math.max(0,min-(max-min)*0.15),suggestedMax:max+(max-min)*0.15};
+  }
+  return{beginAtZero:true};
+}
+
+function cOpts(u,values){
+  const yExtra=values?_yScale(values):{beginAtZero:true};
+  return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8892A8',font:{family:'DM Sans',size:10},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1C2236',titleColor:'#E8ECF4',bodyColor:'#E8ECF4',borderColor:'#2A3050',borderWidth:1,callbacks:{label:ctx=>`${ctx.dataset.label||''}: ${(ctx.parsed.y??ctx.parsed.x)?.toLocaleString('es-AR',{maximumFractionDigits:2})} ${u}`}}},scales:{x:{ticks:{color:'#8892A8',font:{size:10}},grid:{color:'#1C2236'}},y:{...yExtra,ticks:{color:'#8892A8',font:{family:'Space Mono',size:9}},grid:{color:'#1C2236'},title:{display:true,text:u,color:'#8892A8',font:{size:10}}}}};
+}
+
+// === Mapeo VIVALCE -> Categoría ===
+// Cada operación de VIVALCE (en segments.VIVALCE.comex1) se asigna a 1 o más categorías
+// según producto y representada. Los kg/fob se prorratean por producto cuando una OC mezcla.
+function _vivalceCategoriaProducto(producto,representada){
+  const p=(producto||'').toUpperCase().replace(/[\s-]/g,'');
+  if(representada==='ASK')return 'Fundición';
+  // SI GROUP por producto:
+  if(p.includes('SP103')||p.includes('SP134'))return 'Adhesivos';
+  if(p.includes('SP1068')||p.includes('SP6600')||p.includes('SP6601')||p.includes('SP1077'))return 'Neumáticos';
+  if(p.includes('SP1045'))return 'Caucho Industrial';
+  return null;
+}
+
+// Devuelve un objeto {[cat]: {kg, fob, cif, ops, origenes:{}, productos:{}}}
+// con todos los datos de VIVALCE filtrados por año/mes y agregados por categoría.
+function _vivalceDesgloseCategoria(year,period){
+  const out={};
+  const vRows=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[];
+  vRows.forEach(op=>{
+    if(op.año!==year)return;
+    if(period!=='ytd'&&op.mes!==+period)return;
+    // Sumar productos por categoría
+    const prodsByCat={};
+    op.productos.forEach(pr=>{
+      const cat=_vivalceCategoriaProducto(pr.producto,op.representada);
+      if(!cat)return;
+      if(!prodsByCat[cat])prodsByCat[cat]=[];
+      prodsByCat[cat].push(pr);
+    });
+    // Total kg de productos (para prorratear cif y ops)
+    const totalKgOp=op.productos.reduce((s,pr)=>s+pr.kg,0)||1;
+    Object.entries(prodsByCat).forEach(([cat,prods])=>{
+      const catKg=prods.reduce((s,pr)=>s+pr.kg,0);
+      const catFob=prods.reduce((s,pr)=>s+pr.fob,0);
+      const ratio=catKg/totalKgOp;
+      if(!out[cat])out[cat]={kg:0,fob:0,cif:0,ops:0,origenes:{},productos:{},meses:{}};
+      const o=out[cat];
+      o.kg+=catKg;o.fob+=catFob;o.cif+=op.cif*ratio;o.ops+=op.operaciones*ratio;
+      Object.entries(op.origenes).forEach(([or,v])=>{o.origenes[or]=(o.origenes[or]||0)+v*ratio});
+      prods.forEach(pr=>{
+        if(!o.productos[pr.producto])o.productos[pr.producto]={kg:0,fob:0};
+        o.productos[pr.producto].kg+=pr.kg;
+        o.productos[pr.producto].fob+=pr.fob;
+      });
+      o.meses[op.mes]=(o.meses[op.mes]||0)+catKg;
+    });
+  });
+  return out;
+}
+
+// Devuelve {kg, fob} de VIVALCE para una categoría específica + año + mes
+function _vivalceMesCategoria(catName,year,mes){
+  const vRows=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[];
+  let kg=0,fob=0;
+  vRows.forEach(op=>{
+    if(op.año!==year||op.mes!==mes)return;
+    op.productos.forEach(pr=>{
+      const cat=_vivalceCategoriaProducto(pr.producto,op.representada);
+      if(cat===catName){kg+=pr.kg;fob+=pr.fob}
+    });
+  });
+  return{kg,fob};
+}
 
 function getSeg(){return DATA.segments[currentSeg]||DATA.segments['Todos']}
 
@@ -138,8 +220,19 @@ function render(){
 
 function renderOV(c,seg,y,p){
   const mkt=filt(seg.market,y,p);
-  const tKg=mkt.reduce((s,m)=>s+m.total_kg,0),tFob=mkt.reduce((s,m)=>s+m.total_fob,0);
-  const vKg=mkt.reduce((s,m)=>s+m.vivalce_kg,0),vFob=mkt.reduce((s,m)=>s+m.vivalce_fob,0);
+  // Sumas base del segmento
+  let tKg=mkt.reduce((s,m)=>s+m.total_kg,0),tFob=mkt.reduce((s,m)=>s+m.total_fob,0);
+  let vKg=mkt.reduce((s,m)=>s+m.vivalce_kg,0),vFob=mkt.reduce((s,m)=>s+m.vivalce_fob,0);
+  // Si estamos en una categoría específica (no Todos ni VIVALCE), sumar lo de VIVALCE de esa categoría
+  const isMergeable=currentSeg!=='Todos'&&currentSeg!=='VIVALCE';
+  if(isMergeable){
+    const vDesg=_vivalceDesgloseCategoria(y,p);
+    const vCat=vDesg[currentSeg];
+    if(vCat){
+      tKg+=vCat.kg;tFob+=vCat.fob;
+      vKg+=vCat.kg;vFob+=vCat.fob;
+    }
+  }
   const shareUSD=tFob>0?vFob/tFob:0;
   const ops=mkt.reduce((s,m)=>s+m.n_operaciones,0);
   const avgP=tKg>0?tFob/tKg:0,vP=vKg>0?vFob/vKg:0;
@@ -161,24 +254,89 @@ function renderOV(c,seg,y,p){
     <div class="card"><h3><span class="dot" style="background:var(--sigroup)"></span>Top Importadores ${y} — Precio USD/kg</h3><div class="chart-container tall"><canvas id="chTP"></canvas></div></div>
   </div>`;
 
+  // Datos mensuales con VIVALCE inyectado por categoría (solo si aplica)
   const aM=seg.market.filter(m=>m.año===y).sort((a,b)=>a.mes-b.mes);
-  charts.mv=new Chart(document.getElementById('chMV'),{type:'bar',data:{labels:aM.map(m=>MESES[m.mes]),datasets:[{label:'Volumen (tn)',data:aM.map(m=>m.total_kg/1000),backgroundColor:'rgba(79,140,255,.6)',borderRadius:4}]},options:cOpts('tn')});
-  charts.vv=new Chart(document.getElementById('chVV'),{type:'bar',data:{labels:aM.map(m=>MESES[m.mes]),datasets:[{label:'Competencia',data:aM.map(m=>m.comp_kg/1000),backgroundColor:'rgba(79,140,255,.3)',borderRadius:4},{label:'VIVALCE',data:aM.map(m=>m.vivalce_kg/1000),backgroundColor:'rgba(0,212,170,.8)',borderRadius:4}]},options:{...cOpts('tn'),scales:{...cOpts('tn').scales,x:{...cOpts('tn').scales.x,stacked:true},y:{...cOpts('tn').scales.y,stacked:true}}}});
+  const dataMV=aM.map(m=>{
+    let kg=m.total_kg,vkg=m.vivalce_kg,ckg=m.comp_kg;
+    if(isMergeable){
+      const v=_vivalceMesCategoria(currentSeg,y,m.mes);
+      kg+=v.kg;vkg+=v.kg;
+    }
+    return{mes:m.mes,total:kg/1000,viv:vkg/1000,comp:ckg/1000};
+  });
+  // También considerar meses donde VIVALCE tiene operaciones pero la categoría no tenía registros
+  if(isMergeable){
+    const mesesConV=new Set();
+    const vRows=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[];
+    vRows.forEach(op=>{
+      if(op.año!==y)return;
+      op.productos.forEach(pr=>{
+        if(_vivalceCategoriaProducto(pr.producto,op.representada)===currentSeg){
+          mesesConV.add(op.mes);
+        }
+      });
+    });
+    mesesConV.forEach(mes=>{
+      if(!dataMV.find(d=>d.mes===mes)){
+        const v=_vivalceMesCategoria(currentSeg,y,mes);
+        dataMV.push({mes,total:v.kg/1000,viv:v.kg/1000,comp:0});
+      }
+    });
+    dataMV.sort((a,b)=>a.mes-b.mes);
+  }
+
+  const lbls=dataMV.map(d=>MESES[d.mes]);
+  const totVals=dataMV.map(d=>d.total);
+  charts.mv=new Chart(document.getElementById('chMV'),{type:'bar',data:{labels:lbls,datasets:[{label:'Volumen (tn)',data:totVals,backgroundColor:'rgba(79,140,255,.6)',borderRadius:4}]},options:cOpts('tn',totVals)});
+  const stackVals=[...dataMV.map(d=>d.comp),...dataMV.map(d=>d.viv)];
+  const optsVV=cOpts('tn',stackVals);
+  charts.vv=new Chart(document.getElementById('chVV'),{type:'bar',data:{labels:lbls,datasets:[{label:'Competencia',data:dataMV.map(d=>d.comp),backgroundColor:'rgba(79,140,255,.3)',borderRadius:4},{label:'VIVALCE',data:dataMV.map(d=>d.viv),backgroundColor:'rgba(0,212,170,.8)',borderRadius:4}]},options:{...optsVV,scales:{...optsVV.scales,x:{...optsVV.scales.x,stacked:true},y:{...optsVV.scales.y,stacked:true}}}});
   
-  const tops=(seg.top_competitors[y]||[]).slice(0,10);
-  charts.tc=new Chart(document.getElementById('chTC'),{type:'bar',data:{labels:tops.map(t=>t.importador.substring(0,25)),datasets:[{data:tops.map(t=>t.kg/1000),backgroundColor:'rgba(79,140,255,.5)',borderRadius:4}]},options:{...cOpts('tn'),indexAxis:'y',plugins:{...cOpts('tn').plugins,legend:{display:false}}}});
+  // Top importadores: si estamos en categoría mergeable, inyectar VIVALCE como un competidor más
+  let tops=(seg.top_competitors[y]||[]).slice();
+  if(isMergeable){
+    const vDesg=_vivalceDesgloseCategoria(y,'ytd');
+    const vCat=vDesg[currentSeg];
+    if(vCat&&vCat.kg>0){
+      tops.push({importador:'VIVALCE S.A.',kg:vCat.kg,fob:vCat.fob,precio_prom:vCat.kg>0?vCat.fob/vCat.kg:0,operaciones:Math.round(vCat.ops),_vivalce:true});
+      tops.sort((a,b)=>b.kg-a.kg);
+    }
+  }
+  tops=tops.slice(0,10);
+  const tcKg=tops.map(t=>t.kg/1000);
+  charts.tc=new Chart(document.getElementById('chTC'),{type:'bar',data:{labels:tops.map(t=>t.importador.substring(0,25)),datasets:[{data:tcKg,backgroundColor:tops.map(t=>t._vivalce?'rgba(0,212,170,.8)':'rgba(79,140,255,.5)'),borderRadius:4}]},options:{...cOpts('tn',tcKg),indexAxis:'y',plugins:{...cOpts('tn',tcKg).plugins,legend:{display:false}}}});
   const byP=[...tops].sort((a,b)=>b.precio_prom-a.precio_prom);
-  charts.tp=new Chart(document.getElementById('chTP'),{type:'bar',data:{labels:byP.map(t=>t.importador.substring(0,25)),datasets:[{data:byP.map(t=>t.precio_prom),backgroundColor:byP.map(t=>t.precio_prom>4?'rgba(255,107,107,.5)':t.precio_prom>2?'rgba(255,184,77,.5)':'rgba(0,212,170,.5)'),borderRadius:4}]},options:{...cOpts('USD/kg'),indexAxis:'y',plugins:{...cOpts('USD/kg').plugins,legend:{display:false}}}});
+  const tpVals=byP.map(t=>t.precio_prom);
+  charts.tp=new Chart(document.getElementById('chTP'),{type:'bar',data:{labels:byP.map(t=>t.importador.substring(0,25)),datasets:[{data:tpVals,backgroundColor:byP.map(t=>t._vivalce?'rgba(0,212,170,.8)':(t.precio_prom>4?'rgba(255,107,107,.5)':t.precio_prom>2?'rgba(255,184,77,.5)':'rgba(0,212,170,.5)')),borderRadius:4}]},options:{...cOpts('USD/kg',tpVals),indexAxis:'y',plugins:{...cOpts('USD/kg',tpVals).plugins,legend:{display:false}}}});
 }
 
 function renderC1(c,seg,y,p){
-  var
- rawData=seg.comex1.slice();if(currentSeg!=='VIVALCE'&&currentSeg!=='Todos')
- {var vData=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:
- [];vData.forEach(function(v){rawData.push(v)})}   const
-  data=filt(rawData,y,p);
+  // Construir lista de operaciones VIVALCE filtradas por categoría seleccionada
+  let rawData=seg.comex1.slice();
+  const isMergeable=currentSeg!=='VIVALCE'&&currentSeg!=='Todos';
+  if(isMergeable){
+    const vRows=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[];
+    vRows.forEach(op=>{
+      // Filtrar productos que pertenezcan a la categoría actual
+      const prodsCat=op.productos.filter(pr=>_vivalceCategoriaProducto(pr.producto,op.representada)===currentSeg);
+      if(prodsCat.length===0)return;
+      // Recalcular kg/fob de la operación con solo los productos de esta categoría
+      const kg=prodsCat.reduce((s,pr)=>s+pr.kg,0);
+      const fob=prodsCat.reduce((s,pr)=>s+pr.fob,0);
+      const ratio=op.kg>0?kg/op.kg:0;
+      rawData.push({
+        año:op.año,mes:op.mes,representada:op.representada,
+        kg,fob,cif:op.cif*ratio,
+        precio_prom:kg>0?fob/kg:0,
+        operaciones:Math.max(1,Math.round(op.operaciones*ratio)),
+        origenes:Object.fromEntries(Object.entries(op.origenes).map(([k,v])=>[k,v*ratio])),
+        productos:prodsCat
+      });
+    });
+  }
+  const data=filt(rawData,y,p);
   const byR={};
-  data.forEach(d=>{if(!byR[d.representada])byR[d.representada]={kg:0,fob:0,cif:0,ops:0,origenes:{},productos:{}};const r=byR[d.representada];r.kg+=d.kg;r.fob+=d.fob;r.cif+=d.cif;r.ops+=d.operaciones;Object.entries(d.origenes).forEach(([o,v])=>{r.origenes[o]=(r.origenes[o]||0)+v});d.productos.forEach(p=>{if(!r.productos[p.producto])r.productos[p.producto]={kg:0,fob:0};r.productos[p.producto].kg+=p.kg;r.productos[p.producto].fob+=p.fob})});
+  data.forEach(d=>{if(!byR[d.representada])byR[d.representada]={kg:0,fob:0,cif:0,ops:0,origenes:{},productos:{}};const r=byR[d.representada];r.kg+=d.kg;r.fob+=d.fob;r.cif+=d.cif;r.ops+=d.operaciones;Object.entries(d.origenes).forEach(([o,v])=>{r.origenes[o]=(r.origenes[o]||0)+v});d.productos.forEach(pp=>{if(!r.productos[pp.producto])r.productos[pp.producto]={kg:0,fob:0};r.productos[pp.producto].kg+=pp.kg;r.productos[pp.producto].fob+=pp.fob})});
   const tKg=Object.values(byR).reduce((s,r)=>s+r.kg,0),tFob=Object.values(byR).reduce((s,r)=>s+r.fob,0);
   
   let cards='';
@@ -201,8 +359,8 @@ function renderC1(c,seg,y,p){
   });
   if(!cards)cards='<div class="empty-state">No hay datos de VIVALCE para este período/categoría</div>';
 
-  var allC1raw=seg.comex1.slice();if(currentSeg!=='VIVALCE'&&currentSeg!=='Todos'){var vD2=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[];vD2.forEach(function(v){allC1raw.push(v)})}
-  const allC1=allC1raw.filter(m=>m.año===y).sort((a,b)=>a.mes-b.mes);
+  // Datos para el chart anual (todo el año)
+  const allC1=rawData.filter(m=>m.año===y).sort((a,b)=>a.mes-b.mes);
   const askM={},siM={};
   allC1.forEach(d=>{const t=d.representada==='ASK'?askM:siM;t[d.mes]=(t[d.mes]||0)+d.kg});
 
@@ -215,13 +373,40 @@ function renderC1(c,seg,y,p){
   <div class="grid2">${cards}</div>`;
 
   const m12=[1,2,3,4,5,6,7,8,9,10,11,12];
-  charts.c1m=new Chart(document.getElementById('chC1M'),{type:'bar',data:{labels:m12.map(m=>MESES[m]),datasets:[{label:'ASK',data:m12.map(m=>(askM[m]||0)/1000),backgroundColor:'rgba(255,184,77,.7)',borderRadius:4},{label:'SI GROUP',data:m12.map(m=>(siM[m]||0)/1000),backgroundColor:'rgba(167,139,250,.7)',borderRadius:4}]},options:{...cOpts('tn'),scales:{...cOpts('tn').scales,x:{...cOpts('tn').scales.x,stacked:true},y:{...cOpts('tn').scales.y,stacked:true}}}});
+  const askVals=m12.map(m=>(askM[m]||0)/1000);
+  const siVals=m12.map(m=>(siM[m]||0)/1000);
+  const allVals=[...askVals,...siVals];
+  const optsC1=cOpts('tn',allVals);
+  charts.c1m=new Chart(document.getElementById('chC1M'),{type:'bar',data:{labels:m12.map(m=>MESES[m]),datasets:[{label:'ASK',data:askVals,backgroundColor:'rgba(255,184,77,.7)',borderRadius:4},{label:'SI GROUP',data:siVals,backgroundColor:'rgba(167,139,250,.7)',borderRadius:4}]},options:{...optsC1,scales:{...optsC1.scales,x:{...optsC1.scales.x,stacked:true},y:{...optsC1.scales.y,stacked:true}}}});
 }
 
 function renderC2(c,seg,y,p){
   const data=filt(seg.comex2,y,p);
   const byI={};
   data.forEach(d=>{d.importadores.forEach(imp=>{if(!byI[imp.importador])byI[imp.importador]={kg:0,fob:0,ops:0,origenes:{}};const r=byI[imp.importador];r.kg+=imp.kg;r.fob+=imp.fob;r.ops+=imp.operaciones;Object.entries(imp.origenes).forEach(([o,v])=>{r.origenes[o]=(r.origenes[o]||0)+v})})});
+  
+  // Inyectar VIVALCE como importador en categorías mergeables
+  const isMergeable=currentSeg!=='Todos'&&currentSeg!=='VIVALCE';
+  if(isMergeable){
+    const vRows=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[];
+    const v={kg:0,fob:0,ops:0,origenes:{},_vivalce:true};
+    vRows.forEach(op=>{
+      if(op.año!==y)return;
+      if(p!=='ytd'&&op.mes!==+p)return;
+      const prodsCat=op.productos.filter(pr=>_vivalceCategoriaProducto(pr.producto,op.representada)===currentSeg);
+      if(prodsCat.length===0)return;
+      const kg=prodsCat.reduce((s,pr)=>s+pr.kg,0);
+      const fob=prodsCat.reduce((s,pr)=>s+pr.fob,0);
+      const ratio=op.kg>0?kg/op.kg:0;
+      v.kg+=kg;v.fob+=fob;v.ops+=op.operaciones*ratio;
+      Object.entries(op.origenes).forEach(([or,vv])=>{v.origenes[or]=(v.origenes[or]||0)+vv*ratio});
+    });
+    if(v.kg>0){
+      v.ops=Math.max(1,Math.round(v.ops));
+      byI['VIVALCE S.A.']=v;
+    }
+  }
+  
   const sorted=Object.entries(byI).sort((a,b)=>b[1].kg-a[1].kg);
   const tKg=sorted.reduce((s,[,r])=>s+r.kg,0),tFob=sorted.reduce((s,[,r])=>s+r.fob,0);
   const maxK=sorted.length>0?sorted[0][1].kg:1;
@@ -232,13 +417,36 @@ function renderC2(c,seg,y,p){
     const sh=tKg>0?(r.kg/tKg*100):0;
     const bW=r.kg/maxK*100;
     const topO=Object.entries(r.origenes).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([o])=>o).join(', ');
-    tR+=`<tr><td style="font-weight:500">${i+1}. ${imp}</td><td class="num bar-cell"><div class="bar-bg" style="width:${bW}%"></div>${fmt(r.kg)}</td><td class="num">${fmtUSD(r.fob)}</td><td class="num">${fmtP(pr)}</td><td class="num">${sh.toFixed(1)}%</td><td class="num">${r.ops}</td><td><span class="tag origin">${topO}</span></td></tr>`;
+    const isViv=r._vivalce;
+    const rowStyle=isViv?'background:rgba(0,212,170,.08)':'';
+    const nameCell=isViv?`<span style="color:var(--vivalce);font-weight:700">${imp}</span> <span class="tag" style="background:rgba(0,212,170,.2);color:var(--vivalce)">VIVALCE</span>`:imp;
+    const barColor=isViv?'background:var(--vivalce);opacity:.25':'';
+    tR+=`<tr style="${rowStyle}"><td style="font-weight:500">${i+1}. ${nameCell}</td><td class="num bar-cell"><div class="bar-bg" style="width:${bW}%;${barColor}"></div>${fmt(r.kg)}</td><td class="num">${fmtUSD(r.fob)}</td><td class="num">${fmtP(pr)}</td><td class="num">${sh.toFixed(1)}%</td><td class="num">${r.ops}</td><td><span class="tag origin">${topO}</span></td></tr>`;
   });
 
+  // Datos mensuales para el chart top5 — incluir VIVALCE si está en top5
   const allC2=seg.comex2.filter(m=>m.año===y).sort((a,b)=>a.mes-b.mes);
-  const t5N=sorted.slice(0,5).map(([n])=>n);
+  const t5=sorted.slice(0,5);
+  const t5N=t5.map(([n])=>n);
   const t5C=['#4F8CFF','#00D4AA','#FFB84D','#A78BFA','#FF6B6B'];
-  const ds=t5N.map((name,i)=>{const md={};allC2.forEach(m=>{const f=m.importadores.find(x=>x.importador===name);md[m.mes]=f?f.kg/1000:0});return{label:name.substring(0,20),data:[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>md[m]||0),borderColor:t5C[i],backgroundColor:t5C[i]+'20',fill:false,tension:.3,pointRadius:2,borderWidth:2}});
+  const ds=t5.map(([name,r],i)=>{
+    const md={};
+    if(r._vivalce){
+      // Volumen mensual de VIVALCE en esta categoría
+      const vRows=DATA.segments['VIVALCE']?DATA.segments['VIVALCE'].comex1:[];
+      vRows.forEach(op=>{
+        if(op.año!==y)return;
+        op.productos.forEach(pr=>{
+          if(_vivalceCategoriaProducto(pr.producto,op.representada)===currentSeg){
+            md[op.mes]=(md[op.mes]||0)+pr.kg/1000;
+          }
+        });
+      });
+    }else{
+      allC2.forEach(m=>{const f=m.importadores.find(x=>x.importador===name);md[m.mes]=f?f.kg/1000:0});
+    }
+    return{label:name.substring(0,20),data:[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>md[m]||0),borderColor:r._vivalce?'#00D4AA':t5C[i],backgroundColor:(r._vivalce?'#00D4AA':t5C[i])+'20',borderWidth:r._vivalce?3:2,fill:false,tension:.3,pointRadius:r._vivalce?3:2};
+  });
   const segLabel=currentSeg==='Todos'?'Competencia':currentSeg;
 
   c.innerHTML=`
@@ -252,7 +460,8 @@ function renderC2(c,seg,y,p){
   <div class="card"><h3><span class="dot" style="background:var(--accent3)"></span>Ranking Importadores</h3>
   <div class="scroll-table"><table class="data"><thead><tr><th>Importador</th><th class="num">Kg</th><th class="num">FOB</th><th class="num">USD/kg</th><th class="num">Share</th><th class="num">Ops</th><th>Origen</th></tr></thead><tbody>${tR}</tbody></table></div></div>`;
 
-  charts.c2m=new Chart(document.getElementById('chC2M'),{type:'line',data:{labels:[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>MESES[m]),datasets:ds},options:cOpts('tn')});
+  const allVals=ds.flatMap(d=>d.data);
+  charts.c2m=new Chart(document.getElementById('chC2M'),{type:'line',data:{labels:[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>MESES[m]),datasets:ds},options:cOpts('tn',allVals)});
 }
 
 initPills();
